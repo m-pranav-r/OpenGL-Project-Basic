@@ -1,1 +1,2 @@
 C:\Users\91995\Documents\OpenGL\OGL\x64\Debug\OGL.exe
+C:\Users\91995\Documents\Work\OpenGL\OGL\x64\Debug\OGL.exe
