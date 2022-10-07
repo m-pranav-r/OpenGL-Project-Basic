@@ -140,6 +140,12 @@
     <None Include="Source\Shader\fragment.frag" />
     <None Include="Source\Shader\vertex.vert" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Source\Tex\container.jpg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

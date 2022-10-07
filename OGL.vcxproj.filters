@@ -29,4 +29,14 @@
     <None Include="Source\Shader\vertex.vert" />
     <None Include="Source\Shader\fragment.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Source\Tex\container.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
