@@ -82,10 +82,13 @@ int main()
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		//Render initial band
 		float part = 360.0f / 8;
 		for (int i = 0; i < 8; i++)
 		{
 			glm::mat4 temprot = glm::mat4(1.0f);
+			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
 			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
 			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
@@ -93,6 +96,51 @@ int main()
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
+
+
+		//Second band
+		for (int i = 0; i < 8; i++)
+		{
+			glm::mat4 temprot = glm::mat4(1.0f);
+			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
+			temprot = glm::rotate(temprot, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
+			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
+			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+
+		//Third band
+		for (int i = 0; i < 8; i++)
+		{
+			glm::mat4 temprot = glm::mat4(1.0f);
+			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
+			temprot = glm::rotate(temprot, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
+			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
+			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+
+		//Fourth band
+		for (int i = 0; i < 8; i++)
+		{
+			glm::mat4 temprot = glm::mat4(1.0f);
+			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
+			temprot = glm::rotate(temprot, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
+			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
+			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
