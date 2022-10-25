@@ -31,6 +31,14 @@ float vertices[] = {
 	0.5f,  0.5f, 0.0f,		1.0f, 1.0f	//top right
 };
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+
 //int indices[] = {
 //	0, 1, 2,
 //	2, 3, 0
@@ -62,6 +70,8 @@ int main()
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f), (float) WINDOW_HEIGHT / WINDOW_WIDTH, 0.1f, 100.0f);
 
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
 	currShader.Use();
 	//glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -73,7 +83,13 @@ int main()
 	//Render Loop
 	while (!glfwWindowShouldClose(window))
 	{
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		processInput(window);
+
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		glClearColor(0.5f, 0.5f, 0.7f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -92,7 +108,7 @@ int main()
 			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
 			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -107,7 +123,7 @@ int main()
 			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
 			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -121,7 +137,7 @@ int main()
 			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
 			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -135,7 +151,7 @@ int main()
 			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
 			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
+			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
 			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -170,6 +186,13 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	const float cameraSpeed = 2.5f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
 }
 
 GLFWwindow* InitWindow()

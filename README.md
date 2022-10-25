@@ -7,9 +7,9 @@
 - GLAD
 - GLM
 
-#Current features:
+# Current features:
 (If you can even call them that)
 
--Simple Vertex Rendering
--Simple Texturing
--Perspective Projection
+- Simple Vertex Rendering
+- Simple Texturing
+- Perspective Projection
