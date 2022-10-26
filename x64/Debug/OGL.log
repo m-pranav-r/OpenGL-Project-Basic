@@ -1,3 +1,1 @@
-﻿  Main.cpp
-C:\Users\91995\Documents\Work\OpenGL\OGL\Source\Main.cpp(86,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  OGL.vcxproj -> C:\Users\91995\Documents\Work\OpenGL\OGL\x64\Debug\OGL.exe
+﻿  OGL.vcxproj -> C:\Users\91995\Documents\Work\OpenGL\OGL\x64\Debug\OGL.exe

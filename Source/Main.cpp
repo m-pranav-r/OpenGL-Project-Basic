@@ -1,52 +1,68 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
+//SDL Includes Setup
+#define SDL_MAIN_HANDLED
+#include <SDL/SDL.h>
 
+//GLAD Include
+#include <glad/glad.h>
+
+//STB Include
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+//GLM Includes
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+//C++ Lib Includes
+#include <iostream>
 
+//Custom Includes
 #include "ShaderHandler.cpp"
 
+//Window Sizes
 #define WINDOW_WIDTH 1080
 #define WINDOW_HEIGHT 1080
 
+//Kill flag
+bool kill = false;
 
-void framebuf_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
-GLFWwindow* InitWindow();
+SDL_Window* InitWindowSDL();
+void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO);
 void InitTexture(GLuint& texture, const char* path, int& width, int& height, int& channels);
-void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint &VAO);
+void processInput(SDL_Window* window);
 
+//Vertex array
 float vertices[] = {
 	//pos					//tex
 	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f,	//top right
 	-0.5f,  0.5f, 0.0f,		0.0f, 1.0f,	//top left
 	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f,	//bottom left
 	 0.5f, -0.5f, 0.0f,		1.0f, 0.0f,	//bottom right
-	 - 0.5f, -0.5f, 0.0f,		0.0f, 0.0f,	//bottom left
-	0.5f,  0.5f, 0.0f,		1.0f, 1.0f	//top right
+	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f,	//bottom left
+	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f	//top right
 };
 
+//Camera Vectors
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+//Frametime calculation
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+//Keyboard Event handle
+SDL_Event KeyEvent;
 
-//int indices[] = {
-//	0, 1, 2,
-//	2, 3, 0
-//};
+//Bye, GLFW! <3
 
-int main()
+int main(int argc, char* args[])
 {
-	GLFWwindow* window = InitWindow();
+	SDL_GLContext* context = NULL;
+	SDL_Window* window = InitWindowSDL();
+	SDL_Surface* screenSurface = NULL;
+	screenSurface = SDL_GetWindowSurface(window);
 
 	unsigned int VBO, EBO, VAO;
 	glGenBuffers(1, &VBO);
@@ -61,29 +77,30 @@ int main()
 	glGenTextures(1, &texture);
 	InitTexture(texture, "Source/Tex/container.jpg", width, height, channels);
 
+	//Transforms Setup
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	
+
 	glm::mat4 view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), (float) WINDOW_HEIGHT / WINDOW_WIDTH, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_HEIGHT / WINDOW_WIDTH, 0.1f, 100.0f);
 
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
+	//Shader Setup
 	currShader.Use();
 	//glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-
+	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
 
-	//Render Loop
-	while (!glfwWindowShouldClose(window))
+	while (!kill)
 	{
-		float currentFrame = glfwGetTime();
+		Uint64 currentFrame = SDL_GetPerformanceCounter();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
@@ -156,15 +173,49 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
 
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		SDL_GL_SwapWindow(window);
 	}
-	glfwTerminate();
+
+	SDL_Quit();
 	return 0;
 }
 
-void InitBuffers(GLuint& VBO, GLuint &EBO, GLuint& VAO)
+SDL_Window* InitWindowSDL()
+{
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
+	{
+		std::cout << "Couldn't initiate SDL, exiting." << std::endl;
+		return NULL;
+	}
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+	SDL_Window* window = NULL;
+
+	window = SDL_CreateWindow("LearnOpenGL - SDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create window, exiting" << std::endl;
+		SDL_Quit();
+		return NULL;
+	}
+
+	SDL_GLContext context = SDL_GL_CreateContext(window);
+	SDL_GL_MakeCurrent(window, context);
+
+	if (!gladLoadGLLoader(SDL_GL_GetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD, exiting" << std::endl;
+		return NULL;
+	}
+
+	return window;
+}
+
+void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO)
 {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -177,52 +228,7 @@ void InitBuffers(GLuint& VBO, GLuint &EBO, GLuint& VAO)
 	glEnableVertexAttribArray(1);
 }
 
-void framebuf_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
-	const float cameraSpeed = 2.5f * deltaTime;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cameraPos += cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos -= cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-
-}
-
-GLFWwindow* InitWindow()
-{
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create window, exiting" << std::endl;
-		glfwTerminate();
-		return NULL;
-	}
-	glfwMakeContextCurrent(window);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD, exiting" << std::endl;
-		return NULL;
-	}
-	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-	glfwSetFramebufferSizeCallback(window, framebuf_size_callback);
-
-	return window;
-}
-
-
-void InitTexture(GLuint &texture, const char* path, int &width, int &height, int &channels)
+void InitTexture(GLuint& texture, const char* path, int& width, int& height, int& channels)
 {
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -239,4 +245,34 @@ void InitTexture(GLuint &texture, const char* path, int &width, int &height, int
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
+}
+
+void processInput(SDL_Window* window)
+{
+	while (SDL_PollEvent(&KeyEvent))
+	{
+		std::cout << "KeyEventGen:"<<KeyEvent.type<< std::endl;
+		const float cameraSpeed = 0.00000050f * deltaTime;
+		if(KeyEvent.type == SDL_KEYDOWN) switch (KeyEvent.key.keysym.sym)
+		{
+			case SDLK_w:
+			cameraPos += cameraSpeed * cameraFront;
+			break;
+
+			case SDLK_s:
+			cameraPos -= cameraSpeed * cameraFront;
+			break;
+
+			case SDLK_a:
+			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			break;
+
+			case SDLK_d:
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			break;
+
+			case SDLK_ESCAPE:
+			kill = true;
+		}
+	}
 }
