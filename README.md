@@ -2,7 +2,7 @@
  A repo to keep track of my progress and to ensure I have a backup in case I frick up.
 
 # Added libraries:
-- GLFW
+- SDL
 - KHR
 - GLAD
 - GLM
@@ -13,3 +13,4 @@
 - Simple Vertex Rendering
 - Simple Texturing
 - Perspective Projection
+- Swanky new SDL rewrite!
