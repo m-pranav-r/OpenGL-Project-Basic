@@ -29,6 +29,9 @@
     <None Include="Source\Shader\vertex.vert" />
     <None Include="Source\Shader\fragment.frag" />
     <None Include="Libs\SDL2.dll" />
+    <None Include="Source\Shader\lightVertex.vert" />
+    <None Include="Source\Shader\lightFragment.frag" />
+    <None Include="Source\Shader\lightSourceFragment.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\stb_image.h">

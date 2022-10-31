@@ -140,6 +140,9 @@
   <ItemGroup>
     <None Include="Libs\SDL2.dll" />
     <None Include="Source\Shader\fragment.frag" />
+    <None Include="Source\Shader\lightFragment.frag" />
+    <None Include="Source\Shader\lightSourceFragment.frag" />
+    <None Include="Source\Shader\lightVertex.vert" />
     <None Include="Source\Shader\vertex.vert" />
   </ItemGroup>
   <ItemGroup>

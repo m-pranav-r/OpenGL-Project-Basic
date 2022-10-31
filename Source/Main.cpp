@@ -28,19 +28,61 @@
 bool kill = false;
 
 SDL_Window* InitWindowSDL();
-void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO);
+void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint& LVAO);
 void InitTexture(GLuint& texture, const char* path, int& width, int& height, int& channels);
 void processInput(SDL_Window* window);
 
 //Vertex array
-float vertices[] = {
+float verticesOld[] = {
 	//pos					//tex
 	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f,	//top right
 	-0.5f,  0.5f, 0.0f,		0.0f, 1.0f,	//top left
 	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f,	//bottom left
 	 0.5f, -0.5f, 0.0f,		1.0f, 0.0f,	//bottom right
-	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f,	//bottom left
-	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f	//top right
+};
+
+float vertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
 //Camera Vectors
@@ -51,6 +93,8 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 //Frametime calculation
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+float sysStart = 0.0f;
 
 //Keyboard Event handle
 SDL_Event KeyEvent;
@@ -64,13 +108,15 @@ int main(int argc, char* args[])
 	SDL_Surface* screenSurface = NULL;
 	screenSurface = SDL_GetWindowSurface(window);
 
-	unsigned int VBO, EBO, VAO;
+	unsigned int VBO, EBO, VAO, LVAO;
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 	glGenVertexArrays(1, &VAO);
-	InitBuffers(VBO, EBO, VAO);
+	InitBuffers(VBO, EBO, VAO, LVAO);
 
-	Shader currShader("Source/Shader/vertex.vert", "Source/Shader/fragment.frag");
+	//Shader currShader("Source/Shader/vertex.vert", "Source/Shader/fragment.frag");
+	Shader lightShader("Source/Shader/lightVertex.vert", "Source/Shader/lightFragment.frag");
+	Shader lightSourceShader("Source/Shader/lightVertex.vert", "Source/Shader/lightSourceFragment.frag");
 
 	unsigned int texture;
 	int width, height, channels;
@@ -90,90 +136,53 @@ int main(int argc, char* args[])
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 	//Shader Setup
-	currShader.Use();
-	//glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	lightShader.Use();
+	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	lightShader.setvec3("objectColor", 1.0f, 0.5f, 0.31f);
+	lightShader.setvec3("lightColor", 1.0f, 1.0f, 1.0f);
 
 	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
 
+	sysStart = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
+
 	while (!kill)
 	{
-		Uint64 currentFrame = SDL_GetPerformanceCounter();
+		float currentFrame = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
 		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
 
 		processInput(window);
 
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		glClearColor(0.5f, 0.5f, 0.7f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		model = glm::mat4(1.0f);
+		lightShader.Use();
+		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+		glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f));
+		lightSourceShader.Use();
+		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(LVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-		//Render initial band
-		float part = 360.0f / 8;
-		for (int i = 0; i < 8; i++)
-		{
-			glm::mat4 temprot = glm::mat4(1.0f);
-			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
-			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
-			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		}
-
-
-		//Second band
-		for (int i = 0; i < 8; i++)
-		{
-			glm::mat4 temprot = glm::mat4(1.0f);
-			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
-			temprot = glm::rotate(temprot, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
-			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		}
-
-		//Third band
-		for (int i = 0; i < 8; i++)
-		{
-			glm::mat4 temprot = glm::mat4(1.0f);
-			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
-			temprot = glm::rotate(temprot, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
-			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		}
-
-		//Fourth band
-		for (int i = 0; i < 8; i++)
-		{
-			glm::mat4 temprot = glm::mat4(1.0f);
-			temprot = glm::scale(temprot, glm::vec3(0.5f, 0.5f, 0.5f));
-			temprot = glm::rotate(temprot, glm::radians(135.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			temprot = glm::rotate(temprot, glm::radians(part * (i + 1)), glm::vec3(0.0f, 1.0f, 0.0f));
-			temprot = glm::translate(temprot, glm::vec3(0.0f, 0.0f, -1.3f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(temprot));
-			//view = glm::rotate(view, (float)glfwGetTime() * glm::radians(0.001f), glm::vec3(0.1f, 0.1f, 0.1f));
-			glUniformMatrix4fv(glGetUniformLocation(currShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		}
-
 		SDL_GL_SwapWindow(window);
+		lastFrame = currentFrame;
 	}
 
 	SDL_Quit();
@@ -215,7 +224,7 @@ SDL_Window* InitWindowSDL()
 	return window;
 }
 
-void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO)
+void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint &LVAO)
 {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -226,6 +235,13 @@ void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	//Light Setup
+	glGenVertexArrays(1, &LVAO);
+	glBindVertexArray(LVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 }
 
 void InitTexture(GLuint& texture, const char* path, int& width, int& height, int& channels)
@@ -249,30 +265,34 @@ void InitTexture(GLuint& texture, const char* path, int& width, int& height, int
 
 void processInput(SDL_Window* window)
 {
-	while (SDL_PollEvent(&KeyEvent))
+	const float cameraSpeed = 2.5f * deltaTime;
+
+	SDL_PumpEvents();
+
+	const Uint8* keyState = SDL_GetKeyboardState(NULL);
+
+	if (keyState[SDL_SCANCODE_W])
 	{
-		std::cout << "KeyEventGen:"<<KeyEvent.type<< std::endl;
-		const float cameraSpeed = 0.00000050f * deltaTime;
-		if(KeyEvent.type == SDL_KEYDOWN) switch (KeyEvent.key.keysym.sym)
-		{
-			case SDLK_w:
-			cameraPos += cameraSpeed * cameraFront;
-			break;
+		cameraPos += cameraSpeed * cameraFront;
+	}
 
-			case SDLK_s:
-			cameraPos -= cameraSpeed * cameraFront;
-			break;
+	if (keyState[SDL_SCANCODE_S])
+	{
+		cameraPos -= cameraSpeed * cameraFront;
+	}
 
-			case SDLK_a:
-			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-			break;
+	if (keyState[SDL_SCANCODE_A])
+	{
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
 
-			case SDLK_d:
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-			break;
+	if (keyState[SDL_SCANCODE_D])
+	{
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
 
-			case SDLK_ESCAPE:
-			kill = true;
-		}
+	if (keyState[SDL_SCANCODE_ESCAPE])
+	{
+		kill = true;
 	}
 }
