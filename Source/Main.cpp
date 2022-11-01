@@ -33,7 +33,7 @@ void InitTexture(GLuint& texture, const char* path, int& width, int& height, int
 void processInput(SDL_Window* window);
 
 //Vertex array
-float verticesOld[] = {
+float verticesOlder[] = {
 	//pos					//tex
 	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f,	//top right
 	-0.5f,  0.5f, 0.0f,		0.0f, 1.0f,	//top left
@@ -41,7 +41,7 @@ float verticesOld[] = {
 	 0.5f, -0.5f, 0.0f,		1.0f, 0.0f,	//bottom right
 };
 
-float vertices[] = {
+float verticesOld[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
 	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -85,6 +85,50 @@ float vertices[] = {
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
+float vertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+};
+
 //Camera Vectors
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -99,7 +143,6 @@ float sysStart = 0.0f;
 //Keyboard Event handle
 SDL_Event KeyEvent;
 
-//Bye, GLFW! <3
 
 int main(int argc, char* args[])
 {
@@ -112,6 +155,7 @@ int main(int argc, char* args[])
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 	glGenVertexArrays(1, &VAO);
+	glGenVertexArrays(1, &LVAO);
 	InitBuffers(VBO, EBO, VAO, LVAO);
 
 	//Shader currShader("Source/Shader/vertex.vert", "Source/Shader/fragment.frag");
@@ -140,8 +184,8 @@ int main(int argc, char* args[])
 	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	lightShader.setvec3("objectColor", 1.0f, 0.5f, 0.31f);
-	lightShader.setvec3("lightColor", 1.0f, 1.0f, 1.0f);
+	lightShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+	lightShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
 	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
@@ -157,8 +201,19 @@ int main(int argc, char* args[])
 
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f));
+		lightSourceShader.Use();
+		lightSourceShader.setMat4("model", model);
+		lightSourceShader.setMat4("view", view);
+		lightSourceShader.setMat4("projection", projection);
+		glBindVertexArray(LVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
 		//glActiveTexture(GL_TEXTURE0);
 		//glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
@@ -167,17 +222,7 @@ int main(int argc, char* args[])
 		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-		glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lightSourceShader.Use();
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(lightSourceShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(LVAO);
+		lightShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -231,16 +276,15 @@ void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint &LVAO)
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	//Light Setup
-	glGenVertexArrays(1, &LVAO);
 	glBindVertexArray(LVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 }
 
@@ -289,6 +333,26 @@ void processInput(SDL_Window* window)
 	if (keyState[SDL_SCANCODE_D])
 	{
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+
+	if (keyState[SDL_SCANCODE_Q])
+	{
+		cameraPos += cameraSpeed * cameraUp;
+	}
+
+	if (keyState[SDL_SCANCODE_E])
+	{
+		cameraPos -= cameraSpeed * cameraUp;
+	}
+
+	if (keyState[SDL_SCANCODE_RIGHT])
+	{
+		cameraFront = glm::normalize(cameraFront + glm::vec3(cameraSpeed * 0.5f, 0.0f, -(cameraSpeed * 0.5f)));
+	}
+
+	if (keyState[SDL_SCANCODE_LEFT])
+	{
+		cameraFront = glm::normalize(cameraFront + glm::vec3(-(cameraSpeed * 0.5f), 0.0f, cameraSpeed * 0.5f));
 	}
 
 	if (keyState[SDL_SCANCODE_ESCAPE])

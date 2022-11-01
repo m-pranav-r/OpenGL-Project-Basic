@@ -10,7 +10,7 @@
 # Current features:
 (If you can even call them that)
 
-- Simple Vertex Rendering
-- Simple Texturing
-- Perspective Projection
-- Swanky new SDL rewrite!
+- Simple Vertex Rendering!
+- Simple Texturing!
+- Perspective Projection!
+- Lighting from the 70's!

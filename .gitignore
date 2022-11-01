@@ -1,5 +1,13 @@
-.vs
+.vs/
 
-x64
+x64/
 
-Include/SDL
+OGL.sln
+
+OGL.vcxproj
+
+OGL.vcxproj.filters
+
+OGL.vcxproj.user
+
+Include/SDL/
