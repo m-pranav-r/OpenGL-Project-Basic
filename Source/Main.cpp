@@ -21,8 +21,8 @@
 #include "ShaderHandler.cpp"
 
 //Window Sizes
-#define WINDOW_WIDTH 1080
-#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
 
 //Kill flag
 bool kill = false;
@@ -30,7 +30,7 @@ bool kill = false;
 SDL_Window* InitWindowSDL();
 void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint& LVAO);
 void InitTexture(GLuint& texture, const char* path, int& width, int& height, int& channels);
-void processInput(SDL_Window* window);
+void processInput();
 
 //Vertex array
 float verticesOlder[] = {
@@ -138,7 +138,6 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-float sysStart = 0.0f;
 
 //Keyboard Event handle
 SDL_Event KeyEvent;
@@ -175,7 +174,7 @@ int main(int argc, char* args[])
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_HEIGHT / WINDOW_WIDTH, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
 
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
@@ -190,21 +189,19 @@ int main(int argc, char* args[])
 	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
 
-	sysStart = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
-
 	while (!kill)
 	{
 		float currentFrame = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
 		deltaTime = currentFrame - lastFrame;
 
-		processInput(window);
+		processInput();
 
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
+		glm::vec3 lightPos(glm::sin(SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency()), 1.0f, -2.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lightSourceShader.Use();
@@ -219,10 +216,12 @@ int main(int argc, char* args[])
 		glBindVertexArray(VAO);
 		model = glm::mat4(1.0f);
 		lightShader.Use();
-		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		lightShader.setMat4("model", model);
+		lightShader.setMat4("view", view);
+		lightShader.setMat4("projection", projection);
 		lightShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
+		lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+		std::cout << "viewPos X:" << cameraPos.x << "viewPos Y:" << cameraPos.y << "viewPos Z:" << cameraPos.z << std::endl;
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -307,9 +306,9 @@ void InitTexture(GLuint& texture, const char* path, int& width, int& height, int
 	stbi_image_free(data);
 }
 
-void processInput(SDL_Window* window)
+void processInput()
 {
-	const float cameraSpeed = 2.5f * deltaTime;
+	const float cameraSpeed = 4.5f * deltaTime;
 
 	SDL_PumpEvents();
 
@@ -335,24 +334,32 @@ void processInput(SDL_Window* window)
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	}
 
-	if (keyState[SDL_SCANCODE_Q])
+	if (keyState[SDL_SCANCODE_E])
 	{
 		cameraPos += cameraSpeed * cameraUp;
 	}
 
-	if (keyState[SDL_SCANCODE_E])
+	if (keyState[SDL_SCANCODE_Q])
 	{
 		cameraPos -= cameraSpeed * cameraUp;
 	}
 
-	if (keyState[SDL_SCANCODE_RIGHT])
-	{
-		cameraFront = glm::normalize(cameraFront + glm::vec3(cameraSpeed * 0.5f, 0.0f, -(cameraSpeed * 0.5f)));
-	}
-
 	if (keyState[SDL_SCANCODE_LEFT])
 	{
-		cameraFront = glm::normalize(cameraFront + glm::vec3(-(cameraSpeed * 0.5f), 0.0f, cameraSpeed * 0.5f));
+		glm::mat4 rotate = glm::mat4(1.0f);
+		glm::vec4 tempvec = glm::vec4(cameraFront, 1.0f);
+		rotate = glm::rotate(rotate, glm::radians(cameraSpeed * 10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		tempvec = rotate * tempvec;
+		cameraFront = glm::vec3(tempvec);
+	}
+
+	if (keyState[SDL_SCANCODE_RIGHT])
+	{
+		glm::mat4 rotate = glm::mat4(1.0f);
+		glm::vec4 tempvec = glm::vec4(cameraFront, 1.0f);
+		rotate = glm::rotate(rotate, glm::radians(cameraSpeed * 10.0f), glm::vec3(0.0f,-1.0f, 0.0f));
+		tempvec = rotate * tempvec;
+		cameraFront = glm::vec3(tempvec);
 	}
 
 	if (keyState[SDL_SCANCODE_ESCAPE])
