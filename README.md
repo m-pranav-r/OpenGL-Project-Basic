@@ -10,7 +10,7 @@
 # Current features:
 (If you can even call them that)
 
-- Simple Vertex Rendering!
-- Simple Texturing!
+- Simple Vertex Rendering and Texturing!
 - Perspective Projection!
 - Lighting from the 70's!
+- Barebones Materials Support!

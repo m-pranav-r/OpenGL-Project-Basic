@@ -178,6 +178,8 @@ int main(int argc, char* args[])
 
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
+	glm::vec4 viewActual = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 	//Shader Setup
 	lightShader.Use();
 	glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -205,6 +207,8 @@ int main(int argc, char* args[])
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lightSourceShader.Use();
+
+		//Transform Bindings
 		lightSourceShader.setMat4("model", model);
 		lightSourceShader.setMat4("view", view);
 		lightSourceShader.setMat4("projection", projection);
@@ -216,12 +220,28 @@ int main(int argc, char* args[])
 		glBindVertexArray(VAO);
 		model = glm::mat4(1.0f);
 		lightShader.Use();
+
+		//Transform Bindings
 		lightShader.setMat4("model", model);
 		lightShader.setMat4("view", view);
 		lightShader.setMat4("projection", projection);
+		
+		//Position Bindings
 		lightShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
 		lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
-		std::cout << "viewPos X:" << cameraPos.x << "viewPos Y:" << cameraPos.y << "viewPos Z:" << cameraPos.z << std::endl;
+
+		//Material Bindings
+		lightShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+		lightShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+		lightShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+		lightShader.setFloat("material.shininess", 32.0f);
+
+		//Light Bindings
+		lightShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		lightShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		lightShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		//Render
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
