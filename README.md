@@ -14,3 +14,4 @@
 - Perspective Projection!
 - Lighting from the 70's!
 - Barebones Materials Support!
+- Crappy Spotlights!

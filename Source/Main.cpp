@@ -78,6 +78,23 @@ float vertices[] = {
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
+
+
+glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+
+
 //Camera Vectors
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -106,7 +123,6 @@ int main(int argc, char* args[])
 	glGenVertexArrays(1, &LVAO);
 	InitBuffers(VBO, EBO, VAO, LVAO);
 
-	//Shader currShader("Source/Shader/vertex.vert", "Source/Shader/fragment.frag");
 	Shader lightShader("Source/Shader/lightVertex.vert", "Source/Shader/lightFragment.frag");
 	Shader lightSourceShader("Source/Shader/lightVertex.vert", "Source/Shader/lightSourceFragment.frag");
 
@@ -121,12 +137,6 @@ int main(int argc, char* args[])
 	InitTexture(specularTexture, "Source/Tex/container2_specular.png");
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, specularTexture);
-
-	/*unsigned int  emissiveTexture;
-	glGenTextures(1, &emissiveTexture);
-	InitTexture(emissiveTexture, "Source/Tex/bonus_matrix.jpg");
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, emissiveTexture);*/
 
 	//Transforms Setup
 	glm::mat4 model = glm::mat4(1.0f);
@@ -151,11 +161,15 @@ int main(int argc, char* args[])
 	lightShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 	lightShader.setInt("material.diffuse", 0);
 	lightShader.setInt("material.specular", 1);
-	//lightShader.setInt("emissiveTexture", 2);
 	lightShader.setFloat("material.shininess", 32.0f);
 	lightShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 	lightShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 	lightShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+	lightShader.setFloat("light.constant", 1.0f);
+	lightShader.setFloat("light.linear", 0.09f);
+	lightShader.setFloat("light.quadratic", 0.032f);
+	lightShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+	lightShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
 	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
@@ -177,10 +191,10 @@ int main(int argc, char* args[])
 
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glm::vec3 lightPos(glm::sin(SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency()), 1.0f, -2.0f);
+		glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lightSourceShader.Use();
@@ -192,8 +206,6 @@ int main(int argc, char* args[])
 		glBindVertexArray(LVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
 		model = glm::mat4(1.0f);
 		lightShader.Use();
@@ -206,10 +218,23 @@ int main(int argc, char* args[])
 		//Position Bindings
 		lightShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
 		lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+		lightShader.setVec3("light.position", cameraPos.x, cameraPos.y, cameraPos.z);
+		lightShader.setVec3("light.direction", cameraFront.x, cameraFront.y, cameraFront.z);
 
 
 		//Render
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		for (unsigned int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			lightShader.setMat4("model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 
 		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		SDL_GL_SwapWindow(window);
