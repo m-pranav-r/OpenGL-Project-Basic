@@ -5,9 +5,6 @@
 //GLAD Include
 #include <glad/glad.h>
 
-//STB Include
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 //GLM Includes
 #include <glm/glm.hpp>
@@ -16,20 +13,21 @@
 
 //C++ Lib Includes
 #include <iostream>
+#include <vector>
 
 //Custom Includes
-#include "ShaderHandler.cpp"
+#include <Engine/ShaderHandler.hpp>
+#include <Engine/ModelHandler.hpp>
 
 //Window Sizes
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
+
 //Kill flag
 bool kill = false;
 
 SDL_Window* InitWindowSDL();
-void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint& LVAO);
-void InitTexture(GLuint& texture, const char* path);
 void processInput();
 
 //Vertex array
@@ -78,8 +76,7 @@ float vertices[] = {
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
-
-
+//Cube Positions
 glm::vec3 cubePositions[] = {
 	glm::vec3(0.0f,  0.0f,  0.0f),
 	glm::vec3(2.0f,  5.0f, -15.0f),
@@ -92,8 +89,6 @@ glm::vec3 cubePositions[] = {
 	glm::vec3(1.5f,  0.2f, -1.5f),
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 };
-
-
 
 //Camera Vectors
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -108,7 +103,6 @@ float lastFrame = 0.0f;
 //Keyboard Event handle
 SDL_Event KeyEvent;
 
-
 int main(int argc, char* args[])
 {
 	SDL_GLContext* context = NULL;
@@ -116,17 +110,17 @@ int main(int argc, char* args[])
 	SDL_Surface* screenSurface = NULL;
 	screenSurface = SDL_GetWindowSurface(window);
 
-	unsigned int VBO, EBO, VAO, LVAO;
+	/*unsigned int VBO, EBO, VAO, LVAO;
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 	glGenVertexArrays(1, &VAO);
 	glGenVertexArrays(1, &LVAO);
-	InitBuffers(VBO, EBO, VAO, LVAO);
+	InitBuffers(VBO, EBO, VAO, LVAO);*/
 
 	Shader lightShader("Source/Shader/lightVertex.vert", "Source/Shader/lightFragment.frag");
 	Shader lightSourceShader("Source/Shader/lightVertex.vert", "Source/Shader/lightSourceFragment.frag");
 
-	unsigned int diffuseTexture;
+	/*unsigned int diffuseTexture;
 	glGenTextures(1, &diffuseTexture);
 	InitTexture(diffuseTexture, "Source/Tex/container2.png");
 	glActiveTexture(GL_TEXTURE0);
@@ -136,7 +130,8 @@ int main(int argc, char* args[])
 	glGenTextures(1, &specularTexture);
 	InitTexture(specularTexture, "Source/Tex/container2_specular.png");
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specularTexture);
+	glBindTexture(GL_TEXTURE_2D, specularTexture);*/
+
 
 	//Transforms Setup
 	glm::mat4 model = glm::mat4(1.0f);
@@ -151,6 +146,8 @@ int main(int argc, char* args[])
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 	glm::vec4 viewActual = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	Model guitarModel("Source/Model/backpack/backpack.obj");
 
 	//Shader Setup
 	lightShader.Use();
@@ -217,14 +214,8 @@ int main(int argc, char* args[])
 	lightShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 	lightShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-	//Enable Z-Tests
 	glEnable(GL_DEPTH_TEST);
 
-	//Texture Bindings
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specularTexture);
 
 	while (!kill)
 	{
@@ -252,7 +243,7 @@ int main(int argc, char* args[])
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		glBindVertexArray(VAO);
+		//glBindVertexArray(VAO);
 		model = glm::mat4(1.0f);
 		lightShader.Use();
 
@@ -267,9 +258,10 @@ int main(int argc, char* args[])
 
 
 		//Render
+		guitarModel.Draw(lightShader);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		for (unsigned int i = 0; i < 10; i++)
+		/*for (unsigned int i = 0; i < 10; i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, cubePositions[i]);
@@ -278,9 +270,8 @@ int main(int argc, char* args[])
 			lightShader.setMat4("model", model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
+		}*/
 
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		SDL_GL_SwapWindow(window);
 		lastFrame = currentFrame;
 	}
@@ -322,52 +313,6 @@ SDL_Window* InitWindowSDL()
 	}
 
 	return window;
-}
-
-void InitBuffers(GLuint& VBO, GLuint& EBO, GLuint& VAO, GLuint &LVAO)
-{
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	//Light Setup
-	glBindVertexArray(LVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-}
-
-void InitTexture(GLuint& texture, const char* path)
-{
-	int width, height, channels;
-	unsigned char* data = stbi_load(path, &width, &height, &channels, 0);
-	if (!data)
-	{
-		std::cout << "Failed to load texture, exiting." << std::endl;
-		return;
-	}
-	unsigned int format;
-	if (channels == 1) format = GL_RED;
-	else if (channels == 3) format = GL_RGB;
-	else if (channels == 4) format = GL_RGBA;
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	stbi_image_free(data);
 }
 
 void processInput()

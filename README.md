@@ -6,6 +6,7 @@
 - KHR
 - GLAD
 - GLM
+- Assimp
 
 # Current features:
 (If you can even call them that)
@@ -15,3 +16,4 @@
 - Lighting from the 70's!
 - Barebones Materials Support!
 - Crappy Spotlights!
+- Basic Model Loading!
