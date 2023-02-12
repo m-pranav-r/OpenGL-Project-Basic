@@ -185,28 +185,22 @@ int main(int argc, char* args[])
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glDepthFunc(GL_LESS);
-
+	
+	float widgetXPos = WINDOW_WIDTH / 8;
+	widgetXPos = widgetXPos / WINDOW_WIDTH;
+	float widgetYPos = WINDOW_HEIGHT / 8;
+	widgetYPos = widgetYPos / WINDOW_HEIGHT;
 	float fbCoords[]{
-		 -1.0f,  1.0f,  0.0f, 1.0f,
-		 -1.0f, -1.0f,  0.0f, 0.0f,
-		  1.0f, -1.0f,  1.0f, 0.0f,
+		 -(1 - widgetXPos),  1.0f,  0.0f, 1.0f,
+		 -(1 - widgetXPos),  widgetYPos,  0.0f, 0.0f,
+		  widgetXPos,  widgetYPos,  1.0f, 0.0f,
 
-		 -1.0f,  1.0f,  0.0f, 1.0f,
-		  1.0f, -1.0f,  1.0f, 0.0f,
-		  1.0f,  1.0f,  1.0f, 1.0f
+		 -(1 - widgetXPos),  1.0f,  0.0f, 1.0f,
+		  widgetXPos,  widgetYPos,  1.0f, 0.0f,
+		  widgetXPos,  1.0f,  1.0f, 1.0f
 	};
 
-	//Framebuffer Test VAO
-	//unsigned int FBVAO, FBVBO;
-	//glGenBuffers(1, &FBVBO);
-	//glGenVertexArrays(1, &FBVAO);
-	//glBindVertexArray(FBVAO);
-	//glBindBuffer(GL_ARRAY_BUFFER, FBVBO);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(fbCoords), fbCoords, GL_STATIC_DRAW);
-	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	//glEnableVertexAttribArray(0);
-	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	//glEnableVertexAttribArray(1);
+	//Framebuffer Test VAO, VBO
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
@@ -251,38 +245,51 @@ int main(int argc, char* args[])
 		lightShader.setMat4("projection", projection);
 		
 		//Position Bindings
-		lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+		//lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
 		lightShader.setVec3("spotLight.direction", cameraFront.x, cameraFront.y, cameraFront.z);
 
 
-		//Render
+		//Render 
+		//Duplicate rearview render
 		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 		glEnable(GL_DEPTH_TEST);
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glm::mat4 rearCameraPos = glm::mat4(1.0f);
+		glm::vec4 tempvec = glm::vec4(cameraFront, 1.0f);
+		rearCameraPos = glm::rotate(rearCameraPos, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		tempvec = rearCameraPos * tempvec;
+		glm::vec3 rearPos = glm::vec3(tempvec);
+		view = glm::lookAt(cameraPos, cameraPos + rearPos, cameraUp);
 		for (unsigned int i = 0; i < 9; i++) {
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, modelPositions[i]);
 			lightShader.setMat4("model", model);
+			lightShader.setMat4("view", view);
+			lightShader.setVec3("viewPos", rearPos.x, rearPos.y, rearPos.z);
 			guitarModel.Draw(lightShader);
 		}
-
-		GLint currentVAO;
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &currentVAO);
-		
+		//Main render
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		for (unsigned int i = 0; i < 9; i++) {
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, modelPositions[i]);
+			lightShader.setMat4("model", model);
+			lightShader.setMat4("view", view);
+			lightShader.setVec3("viewPos", cameraPos.x, cameraPos.y, cameraPos.z);
+			guitarModel.Draw(lightShader);
+		}
 		
 		fbTestShader.Use();
+		glDisable(GL_DEPTH_TEST);
 		glBindVertexArray(quadVAO);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		//glUniform1i(glGetUniformLocation(fbTestShader.ID, "screenTexture"), FBO);
 		glActiveTexture(GL_TEXTURE0);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		
-		glBindVertexArray(currentVAO);
 
 		SDL_GL_SwapWindow(window);
 		lastFrame = currentFrame;
