@@ -53,6 +53,9 @@ uniform sampler2D texture_specular1;
 
 out vec4 FragColor;
 
+float near = 0.1; 
+float far  = 100.0;
+
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 FragPos, vec3 viewDir);
@@ -66,6 +69,9 @@ void main()
         result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
     FragColor = vec4(result, 1.0);
+    //float ndc = gl_FragCoord.z * 2.0 - 1.0;
+    //float linearDepth = (2.0 * near * far) / (far + near - ndc * (far - near));
+    //FragColor = vec4(vec3(linearDepth), 1.0);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)

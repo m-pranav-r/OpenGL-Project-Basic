@@ -1,7 +1,6 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-//Assimp Includes
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -14,7 +13,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #endif
 
