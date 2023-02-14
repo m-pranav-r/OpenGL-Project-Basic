@@ -46,7 +46,7 @@ in vec3 FragPos;
 uniform vec3 viewPos;
 uniform Material material;
 uniform DirLight dirLight;
-uniform SpotLight spotLight;
+//uniform SpotLight spotLight;
 uniform PointLight pointLights[NR_POINT_LINES];
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
@@ -58,7 +58,7 @@ float far  = 100.0;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 FragPos, vec3 viewDir);
+//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 FragPos, vec3 viewDir);
 
 void main()
 {   
@@ -67,7 +67,7 @@ void main()
     vec3 result = CalcDirLight(dirLight, norm, viewDir);
     for(int i = 0; i<NR_POINT_LINES; i++)
         result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
-    result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
     FragColor = vec4(result, 1.0);
     //float ndc = gl_FragCoord.z * 2.0 - 1.0;
     //float linearDepth = (2.0 * near * far) / (far + near - ndc * (far - near));
@@ -103,16 +103,16 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
-{
-    vec3 lightDir = normalize(viewPos - FragPos);
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.cutOff - light.outerCutOff;
-    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * texture(texture_diffuse1, TexCoords).rgb;
-    vec3 reflectDir = reflect(-lightDir, normal);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * texture(texture_specular1, TexCoords).rgb;
-    return   (diffuse * intensity) + (specular * intensity);
-}
+//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 FragPos, vec3 viewDir)
+//{
+//    vec3 lightDir = normalize(viewPos - FragPos);
+//    float theta = dot(lightDir, normalize(-light.direction));
+//    float epsilon = light.cutOff - light.outerCutOff;
+//    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+//    float diff = max(dot(normal, lightDir), 0.0);
+//    vec3 diffuse = light.diffuse * diff * texture(texture_diffuse1, TexCoords).rgb;
+//    vec3 reflectDir = reflect(-lightDir, normal);  
+//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+//    vec3 specular = light.specular * spec * texture(texture_specular1, TexCoords).rgb;
+//    return   (diffuse * intensity) + (specular * intensity);
+//}
