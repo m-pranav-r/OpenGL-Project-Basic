@@ -52,25 +52,30 @@ int main(int argc, char* args[])
 	SDL_Surface* screenSurface = NULL;
 	screenSurface = SDL_GetWindowSurface(window);
 
-	Shader geomTestShader("Source/Shader/geomTestVert.vert", "Source/Shader/geomTestFrag.frag", "Source/Shader/geomTestGeom.geom");
+	Shader geomTestShader("Source/Shader/geomTestVert.vert", "Source/Shader/geomTestFrag.frag");// , "Source/Shader/geomTestGeom.geom");
 
-	float points[] = {
-		-0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-		 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-		 0.5f,-0.5f, 0.0f, 0.0f, 1.0f,
-		-0.5f,-0.5f, 1.0f, 1.0f, 0.0f
-	};
+	glm::mat4 model = glm::mat4(1.0f);
+	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	unsigned int geomVBO, geomVAO;
-	glGenBuffers(1, &geomVBO);
-	glGenVertexArrays(1, &geomVAO);
-	glBindVertexArray(geomVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, geomVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+	glm::vec4 viewActual = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	Model guitarModel("Source/Model/backpack/backpack.obj");
+
+	//Shader Setup
+	geomTestShader.Use();
+	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	glEnable(GL_DEPTH_TEST);
 
 	while (!kill)
 	{
@@ -79,12 +84,17 @@ int main(int argc, char* args[])
 
 		processInput();
 		
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		geomTestShader.Use();
-		glBindVertexArray(geomVAO);
-		glDrawArrays(GL_POINTS, 0, 4);
+		//geomTestShader.setFloat("time", SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency());
+		geomTestShader.setMat4("model", model);
+		geomTestShader.setMat4("view", view);
+		geomTestShader.setMat4("projection", projection);
+		guitarModel.Draw(geomTestShader);
 
 		SDL_GL_SwapWindow(window);
 		lastFrame = currentFrame;
