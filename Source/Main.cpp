@@ -34,7 +34,7 @@ unsigned int loadCubemap(std::string firstFace, std::string extension);
 void processInput();
 
 //Camera Vectors
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, -3.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -52,30 +52,86 @@ int main(int argc, char* args[])
 	SDL_Surface* screenSurface = NULL;
 	screenSurface = SDL_GetWindowSurface(window);
 
-	Shader geomTestShader("Source/Shader/geomTestVert.vert", "Source/Shader/geomTestFrag.frag");// , "Source/Shader/geomTestGeom.geom");
+	Shader normalShader("Source/Shader/vert.vert", "Source/Shader/frag.frag");// , "Source/Shader/geomTestGeom.geom");
+	Shader instShader("Source/Shader/instVert.vert", "Source/Shader/frag.frag");
 
-	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	float points[] = {
+		-0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+		 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+		 0.5f,-0.5f, 0.0f, 0.0f, 1.0f,
+		-0.5f,-0.5f, 1.0f, 1.0f, 0.0f
+	};
+
+	Model planetModel("Source/Model/Planet/planet.obj");
+	Model rockModel("Source/Model/Rock/rock.obj");
+
+	unsigned int amount = 100000;
+	glm::mat4* modelMatrices;
+	modelMatrices = new glm::mat4[amount];
+	srand(SDL_GetPerformanceCounter()); // initialize random seed	
+	float radius = 150.0;
+	float offset = 25.0f;
+	for (unsigned int i = 0; i < amount; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
+		float angle = (float)i / (float)amount * 360.0f;
+		float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float x = sin(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float y = displacement * 0.4f; // keep height of field smaller compared to width of x and z
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float z = cos(angle) * radius + displacement;
+		model = glm::translate(model, glm::vec3(x, y, z));
+
+		// 2. scale: scale between 0.05 and 0.25f
+		float scale = (rand() % 20) / 100.0f + 0.05;
+		model = glm::scale(model, glm::vec3(scale));
+
+		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+		float rotAngle = (rand() % 360);
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+		// 4. now add to list of matrices
+		modelMatrices[i] = model;
+	}
 
 	glm::mat4 view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
 	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 1000.0f);
 
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-	glm::vec4 viewActual = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	Model guitarModel("Source/Model/backpack/backpack.obj");
-
-	//Shader Setup
-	geomTestShader.Use();
-	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(geomTestShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
 	glEnable(GL_DEPTH_TEST);
+
+	unsigned int buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+	
+	for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
+	{
+		unsigned int VAO = rockModel.meshes[i].VAO;
+		glBindVertexArray(VAO);
+		std::size_t vec4Size = sizeof(glm::vec4);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+
+		glBindVertexArray(0);
+	}
 
 	while (!kill)
 	{
@@ -83,18 +139,33 @@ int main(int argc, char* args[])
 		deltaTime = currentFrame - lastFrame;
 
 		processInput();
-		
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		geomTestShader.Use();
-		//geomTestShader.setFloat("time", SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency());
-		geomTestShader.setMat4("model", model);
-		geomTestShader.setMat4("view", view);
-		geomTestShader.setMat4("projection", projection);
-		guitarModel.Draw(geomTestShader);
+		normalShader.Use();
+		normalShader.setMat4("projection", projection);
+		normalShader.setMat4("model", model);
+		normalShader.setMat4("view", view);
+		planetModel.Draw(normalShader);
+
+		instShader.Use();
+		instShader.setInt("texture_diffuse1", 0);
+		instShader.setMat4("projection", projection);
+		instShader.setMat4("view", view);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rockModel.textures_loaded[0].id);
+		for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
+		{
+			glBindVertexArray(rockModel.meshes[i].VAO);
+			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(rockModel.meshes[i].indices.size()), GL_UNSIGNED_INT, 0, amount);
+			glBindVertexArray(0);
+		}
 
 		SDL_GL_SwapWindow(window);
 		lastFrame = currentFrame;
@@ -172,7 +243,7 @@ unsigned int loadCubemap(std::string firstFace, std::string extension)
 
 void processInput()
 {
-	const float cameraSpeed = 4.5f * deltaTime;
+	const float cameraSpeed = 10.0f * deltaTime;
 
 	SDL_PumpEvents();
 
@@ -221,12 +292,12 @@ void processInput()
 	{
 		glm::mat4 rotate = glm::mat4(1.0f);
 		glm::vec4 tempvec = glm::vec4(cameraFront, 1.0f);
-		rotate = glm::rotate(rotate, glm::radians(cameraSpeed * 10.0f), glm::vec3(0.0f,-1.0f, 0.0f));
+		rotate = glm::rotate(rotate, glm::radians(cameraSpeed * 10.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		tempvec = rotate * tempvec;
 		cameraFront = glm::vec3(tempvec);
 	}
 
-	if(keyState[SDL_SCANCODE_1]) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (keyState[SDL_SCANCODE_1]) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	if (keyState[SDL_SCANCODE_2]) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
