@@ -22,8 +22,8 @@
 #include <Engine/ShaderHandler.hpp>
 
 //Window Sizes
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 
 
 //Kill flag
@@ -52,49 +52,10 @@ int main(int argc, char* args[])
 	SDL_Surface* screenSurface = NULL;
 	screenSurface = SDL_GetWindowSurface(window);
 
-	Shader normalShader("Source/Shader/vert.vert", "Source/Shader/frag.frag");// , "Source/Shader/geomTestGeom.geom");
-	Shader instShader("Source/Shader/instVert.vert", "Source/Shader/frag.frag");
+	Shader normalShader("Source/Shader/vert.vert", "Source/Shader/frag.frag");// , "Source/Shader/geomTestGeom.geom
+	Shader shadowmapShader("Source/Shader/shadowVert.vert", "Source/Shader/shadowFrag.frag");
 
-	float points[] = {
-		-0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-		 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-		 0.5f,-0.5f, 0.0f, 0.0f, 1.0f,
-		-0.5f,-0.5f, 1.0f, 1.0f, 0.0f
-	};
-
-	Model planetModel("Source/Model/Planet/planet.obj");
-	Model rockModel("Source/Model/Rock/rock.obj");
-
-	unsigned int amount = 100000;
-	glm::mat4* modelMatrices;
-	modelMatrices = new glm::mat4[amount];
-	srand(SDL_GetPerformanceCounter()); // initialize random seed	
-	float radius = 150.0;
-	float offset = 25.0f;
-	for (unsigned int i = 0; i < amount; i++)
-	{
-		glm::mat4 model = glm::mat4(1.0f);
-		// 1. translation: displace along circle with 'radius' in range [-offset, offset]
-		float angle = (float)i / (float)amount * 360.0f;
-		float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-		float x = sin(angle) * radius + displacement;
-		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-		float y = displacement * 0.4f; // keep height of field smaller compared to width of x and z
-		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-		float z = cos(angle) * radius + displacement;
-		model = glm::translate(model, glm::vec3(x, y, z));
-
-		// 2. scale: scale between 0.05 and 0.25f
-		float scale = (rand() % 20) / 100.0f + 0.05;
-		model = glm::scale(model, glm::vec3(scale));
-
-		// 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-		float rotAngle = (rand() % 360);
-		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
-
-		// 4. now add to list of matrices
-		modelMatrices[i] = model;
-	}
+	Model crateModel("Source/Model/Untitled/untitled.obj");
 
 	glm::mat4 view = glm::mat4(1.0f);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
@@ -104,34 +65,33 @@ int main(int argc, char* args[])
 
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
+	//shadowmapping setup
+	unsigned int depthMapFBO;
+	glGenFramebuffers(1, &depthMapFBO);
+
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthMap;
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	glEnable(GL_DEPTH_TEST);
 
-	unsigned int buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-	
-	for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
-	{
-		unsigned int VAO = rockModel.meshes[i].VAO;
-		glBindVertexArray(VAO);
-		std::size_t vec4Size = sizeof(glm::vec4);
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-		glEnableVertexAttribArray(5);
-		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-
-		glVertexAttribDivisor(3, 1);
-		glVertexAttribDivisor(4, 1);
-		glVertexAttribDivisor(5, 1);
-		glVertexAttribDivisor(6, 1);
-
-		glBindVertexArray(0);
-	}
+	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+	glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f), 
+									  glm::vec3( 0.0f, 0.0f,  0.0f), 
+									  glm::vec3( 0.0f, 1.0f,  0.0f));
+	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
 	while (!kill)
 	{
@@ -140,32 +100,76 @@ int main(int argc, char* args[])
 
 		processInput();
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		shadowmapShader.Use();
+		shadowmapShader.setMat4("lightSpace", lightSpaceMatrix);
+		crateModel.Draw(shadowmapShader);
 
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+		shadowmapShader.setMat4("model",
+			glm::translate(
+				glm::scale(model, glm::vec3(2.0f, 3.0f, 4.0f)),
+				glm::vec3(1.0f, 0.0f, 3.0f)
+			)
+		);
+		crateModel.Draw(shadowmapShader);
+
+		shadowmapShader.setMat4("model",
+			glm::translate(
+				glm::rotate(model, glm::radians(55.0f), glm::vec3(1.0f, 1.0f, 1.0f)),
+				glm::vec3(0.0f, 3.0f, 0.0f)
+			)
+		);
+		crateModel.Draw(shadowmapShader);
+
+		shadowmapShader.setMat4("model",
+			glm::translate(
+				glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f)),
+				glm::vec3(0.0f, -1.75f, 0.0f)
+			)
+		);
+		crateModel.Draw(shadowmapShader);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		normalShader.Use();
 		normalShader.setMat4("projection", projection);
 		normalShader.setMat4("model", model);
 		normalShader.setMat4("view", view);
-		planetModel.Draw(normalShader);
+		crateModel.Draw(normalShader);
 
-		instShader.Use();
-		instShader.setInt("texture_diffuse1", 0);
-		instShader.setMat4("projection", projection);
-		instShader.setMat4("view", view);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, rockModel.textures_loaded[0].id);
-		for (unsigned int i = 0; i < rockModel.meshes.size(); i++)
-		{
-			glBindVertexArray(rockModel.meshes[i].VAO);
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(rockModel.meshes[i].indices.size()), GL_UNSIGNED_INT, 0, amount);
-			glBindVertexArray(0);
-		}
+		normalShader.setMat4("model",
+			glm::translate(
+				glm::scale(model, glm::vec3(2.0f, 3.0f, 4.0f)),
+				glm::vec3(1.0f, 0.0f, 3.0f)
+			)
+		);
+		crateModel.Draw(normalShader);
+
+		normalShader.setMat4("model",
+			glm::translate(
+				glm::rotate(model, glm::radians(55.0f), glm::vec3(1.0f, 1.0f, 1.0f)),
+				glm::vec3(0.0f, 3.0f, 0.0f)
+			)
+		);
+		crateModel.Draw(normalShader);
+
+		normalShader.setMat4("model",
+			glm::translate(
+				glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f)),
+				glm::vec3(0.0f, -1.75f, 0.0f)
+			)
+		);
+		crateModel.Draw(normalShader);
 
 		SDL_GL_SwapWindow(window);
 		lastFrame = currentFrame;
@@ -184,6 +188,8 @@ SDL_Window* InitWindowSDL()
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -277,6 +283,16 @@ void processInput()
 	if (keyState[SDL_SCANCODE_Q])
 	{
 		cameraPos -= cameraSpeed * cameraUp;
+	}
+
+	if (keyState[SDL_SCANCODE_N])
+	{
+		glDisable(GL_MULTISAMPLE);
+	}
+
+	if (keyState[SDL_SCANCODE_M])
+	{
+		glEnable(GL_MULTISAMPLE);
 	}
 
 	if (keyState[SDL_SCANCODE_LEFT])
